@@ -140,8 +140,10 @@ const SummaryView: React.SFC<ISummaryProps> = ({
                 <div key={i}>
                   <table className={`table ${classes.table}`}>
                     <thead>
-                      <th>{group.label}</th>
-                      <th />
+                      <tr>
+                        <th>{group.label}</th>
+                        <th />
+                      </tr>
                     </thead>
                     <tbody>
                       {group.properties.map((property) => {
@@ -167,7 +169,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
         <div className="target">
           <div>
             <h4 className={classes.heading}>Google BigQuery</h4>
-            <span onClick={setActiveStep.bind(null, 2)} className={classes.edit}>
+            <span onClick={setActiveStep.bind(null, 3)} className={classes.edit}>
               Edit
             </span>
           </div>
@@ -177,8 +179,10 @@ const SummaryView: React.SFC<ISummaryProps> = ({
                 <div key={i}>
                   <table className={`table ${classes.table}`}>
                     <thead>
-                      <th>{group.label}</th>
-                      <th />
+                      <tr>
+                        <th>{group.label}</th>
+                        <th />
+                      </tr>
                     </thead>
                     <tbody>
                       {group.properties.map((property) => {

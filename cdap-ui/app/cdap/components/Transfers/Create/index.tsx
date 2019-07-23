@@ -21,13 +21,13 @@ import { Theme } from 'services/ThemeHelper';
 
 const Create: React.SFC = () => {
   return (
-    <div>
+    <React.Fragment>
       <EntityTopPanel
         title={`Create a new ${Theme.featureNames.transfers.toLowerCase()}`}
         closeBtnAnchorLink={() => history.back()}
       />
       <Content />
-    </div>
+    </React.Fragment>
   );
 };
 

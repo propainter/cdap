@@ -17,27 +17,31 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
-import { CreateTransferSteps } from 'components/Transfers/Create/Content';
+import { StageConfiguration } from 'components/Transfers/Create/Content';
+import { objectQuery } from 'services/helpers';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     root: {
-      padding: '30px 0',
-      margin: '0 auto',
-      width: '60vw',
+      padding: '30px',
+      width: '75vw',
+      borderTop: `1px solid ${theme.palette.grey[400]}`,
+      overflowY: 'auto',
     },
   };
 };
 
 interface IStepContentProps extends WithStyles<typeof styles> {
+  stage: string;
   activeStep: number;
 }
 
-const StepContentView: React.SFC<IStepContentProps> = ({ activeStep, classes }) => {
-  const Step = CreateTransferSteps[activeStep].component;
+const StepContentView: React.SFC<IStepContentProps> = ({ activeStep, classes, stage }) => {
+  const steps = objectQuery(StageConfiguration, stage, 'steps');
+  const Step = objectQuery(steps, activeStep, 'component');
 
   // don't want the padded container for the Summary view
-  if (activeStep === CreateTransferSteps.length - 1) {
+  if (activeStep === steps.length - 1) {
     return <Step />;
   }
 

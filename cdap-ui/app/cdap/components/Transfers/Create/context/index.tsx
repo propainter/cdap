@@ -16,7 +16,15 @@
 
 import * as React from 'react';
 
+export enum Stages {
+  CONFIGURE = 'configure',
+  ASSESSMENT = 'assessment',
+  PUBLISH = 'publish',
+  VALIDATE = 'validate',
+}
+
 export const defaultContext = {
+  stage: Stages.CONFIGURE,
   activeStep: 0,
   name: '',
   description: '',

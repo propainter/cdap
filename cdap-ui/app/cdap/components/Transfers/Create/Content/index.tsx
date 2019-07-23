@@ -15,35 +15,84 @@
  */
 
 import * as React from 'react';
-import { TransfersCreateContext, defaultContext } from 'components/Transfers/Create/context';
+import {
+  TransfersCreateContext,
+  defaultContext,
+  Stages,
+} from 'components/Transfers/Create/context';
 import StepProgress from 'components/Transfers/Create/StepProgress';
 import StepContent from 'components/Transfers/Create/StepContent';
 import NameDescription from 'components/Transfers/Create/NameDescription';
 import SourceConfig from 'components/Transfers/Create/SourceConfig';
 import TargetConfig from 'components/Transfers/Create/TargetConfig';
 import Summary from 'components/Transfers/Create/Summary';
+import LeftPanel from 'components/Transfers/Create/LeftPanel';
 import { Theme } from 'services/ThemeHelper';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import Source from '../PluginPicker/Source';
+import Target from '../PluginPicker/Target';
 
-export const CreateTransferSteps = [
-  {
-    label: 'Set a name and description',
-    component: NameDescription,
-  },
-  {
-    label: 'Set configs for MySQL database',
-    component: SourceConfig,
-  },
-  {
-    label: 'Set configs for Google BigQuery',
-    component: TargetConfig,
-  },
-  {
-    label: `Review and create ${Theme.featureNames.transfers.toLowerCase()}`,
-    component: Summary,
-  },
-];
+const styles = (): StyleRules => {
+  return {
+    root: {
+      display: 'flex',
+      height: 'calc(100% - 50px)',
+    },
+  };
+};
 
-export default class Content extends React.PureComponent<{}, typeof defaultContext> {
+export const StageConfiguration = {
+  [Stages.CONFIGURE]: {
+    label: 'Configure',
+    steps: [
+      {
+        label: 'Set a name and description',
+        component: NameDescription,
+      },
+      {
+        label: 'Choose a source',
+        component: Source,
+      },
+      {
+        label: 'Set source configs',
+        component: SourceConfig,
+      },
+      {
+        label: 'Choose a target',
+        component: Target,
+      },
+      {
+        label: 'Set target configs',
+        component: TargetConfig,
+      },
+      {
+        label: `Review and create ${Theme.featureNames.transfers.toLowerCase()}`,
+        component: Summary,
+      },
+    ],
+  },
+  [Stages.ASSESSMENT]: {
+    label: 'Assessment',
+    steps: [
+      {
+        label: 'Generate report',
+      },
+      {
+        label: 'View report',
+      },
+    ],
+  },
+  [Stages.PUBLISH]: {
+    label: 'Publish',
+    steps: [
+      {
+        label: 'View summary',
+      },
+    ],
+  },
+};
+
+class ContentView extends React.PureComponent<WithStyles<typeof styles>, typeof defaultContext> {
   public next = () => {
     this.setState({
       activeStep: this.state.activeStep + 1,
@@ -96,9 +145,15 @@ export default class Content extends React.PureComponent<{}, typeof defaultConte
   public render() {
     return (
       <TransfersCreateContext.Provider value={this.state}>
-        <StepProgress />
-        <StepContent />
+        <div className={this.props.classes.root}>
+          <LeftPanel />
+          {/* <StepProgress /> */}
+          <StepContent />
+        </div>
       </TransfersCreateContext.Provider>
     );
   }
 }
+
+const Content = withStyles(styles)(ContentView);
+export default Content;

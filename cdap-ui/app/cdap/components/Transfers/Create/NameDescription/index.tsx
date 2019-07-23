@@ -19,6 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
 import TextField from '@material-ui/core/TextField';
 import StepButtons from 'components/Transfers/Create/StepButtons';
+import If from 'components/If';
 
 const styles = (): StyleRules => {
   return {
@@ -65,7 +66,9 @@ const NameDescriptionView: React.SFC<INameDescriptionProps> = ({
         value={localDescription}
         onChange={(e) => setDescription(e.target.value)}
       />
-      <StepButtons onNext={setNameDescription.bind(null, localName, localDescription)} />
+      <If condition={localName.length > 0}>
+        <StepButtons onNext={setNameDescription.bind(null, localName, localDescription)} />
+      </If>
     </div>
   );
 };

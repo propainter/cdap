@@ -19,16 +19,20 @@ import { transfersCreateConnect } from 'components/Transfers/Create/context';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import { CreateTransferSteps } from 'components/Transfers/Create/Content';
+import { StageConfiguration } from 'components/Transfers/Create/Content';
+import { objectQuery } from 'services/helpers';
 
 interface IStepProgressProps {
   activeStep: number;
+  stage: string;
 }
 
-const StepProgressView: React.SFC<IStepProgressProps> = ({ activeStep }) => {
+const StepProgressView: React.SFC<IStepProgressProps> = ({ activeStep, stage }) => {
+  const steps = objectQuery(StageConfiguration, stage, 'steps');
+
   return (
-    <Stepper activeStep={activeStep} alternativeLabel>
-      {CreateTransferSteps.map((step) => {
+    <Stepper activeStep={activeStep} orientation="vertical">
+      {steps.map((step) => {
         return (
           <Step key={step.label}>
             <StepLabel>{step.label}</StepLabel>

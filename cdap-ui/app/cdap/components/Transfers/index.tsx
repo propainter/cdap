@@ -26,7 +26,7 @@ const basepath = '/ns/:namespace/transfers';
 
 const Transfers: React.SFC = () => {
   return (
-    <div>
+    <div style={{ height: '100%' }}>
       <Helmet
         title={T.translate('features.Transfers.pageTitle', {
           productName: Theme.productName,

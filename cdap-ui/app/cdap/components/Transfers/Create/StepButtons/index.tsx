@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { transfersCreateConnect } from 'components/Transfers/Create/context';
+import { transfersCreateConnect, Stages } from 'components/Transfers/Create/context';
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
 import LoadingSVG from 'components/LoadingSVG';
@@ -33,15 +33,24 @@ const styles = (): StyleRules => {
 
 interface IStepButtonsProps extends WithStyles<typeof styles> {
   activeStep: number;
+  stage: string;
   loading: boolean;
+  hideNext?: boolean;
   onNext?: () => void;
   next: () => void;
   previous: () => void;
   onComplete?: () => void;
 }
 
+const nextStage = {
+  [Stages.CONFIGURE]: 'Assessment',
+  [Stages.ASSESSMENT]: 'Publish',
+};
+
 const StepButtonsView: React.SFC<IStepButtonsProps> = ({
   activeStep,
+  stage,
+  hideNext,
   onNext,
   next,
   previous,
@@ -61,7 +70,7 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
           Previous
         </Button>
       </If>
-      <If condition={typeof onComplete !== 'function'}>
+      <If condition={typeof onComplete !== 'function' && hideNext !== true}>
         <Button variant="contained" color="primary" onClick={handleNextClick}>
           Next
         </Button>
@@ -71,7 +80,7 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
           <If condition={loading}>
             <LoadingSVG />
           </If>
-          Create transfer
+          Next Stage: {nextStage[stage]}
         </Button>
       </If>
     </div>
