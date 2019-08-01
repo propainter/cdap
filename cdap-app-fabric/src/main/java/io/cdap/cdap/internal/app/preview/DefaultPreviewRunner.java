@@ -22,11 +22,13 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
+import io.cdap.cdap.app.preview.PreviewRunnerModule;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -63,6 +65,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +73,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -79,6 +84,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRunner.class);
   private static final Gson GSON = new Gson();
+  // default preview running time is 15min
+  private static final long PREVIEW_TIMEOUT = TimeUnit.MINUTES.toMillis(15);
 
   private static final ProgramTerminator NOOP_PROGRAM_TERMINATOR = programId -> {
     // no-op
@@ -101,12 +108,12 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final LevelDBTableService levelDBTableService;
   private final StructuredTableAdmin structuredTableAdmin;
   private final StructuredTableRegistry structuredTableRegistry;
+  private final ProgramId programId;
 
-  private volatile PreviewStatus status;
   private volatile boolean killedByTimer;
-  private ProgramId programId;
-  private ProgramRunId runId;
+  private CountDownLatch countDownLatch;
   private Timer timer;
+  private long startTimeMillis;
 
   @Inject
   DefaultPreviewRunner(MessagingService messagingService,
@@ -122,7 +129,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
-                       StructuredTableRegistry structuredTableRegistry) {
+                       StructuredTableRegistry structuredTableRegistry,
+                       @Named(PreviewRunnerModule.PREVIEW_PROGRAM_ID) ProgramId programId) {
     this.messagingService = messagingService;
     this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
@@ -131,7 +139,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
     this.previewStore = previewStore;
-    this.status = null;
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
     this.programStore = programStore;
@@ -141,12 +148,12 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.levelDBTableService = levelDBTableService;
     this.structuredTableAdmin = structuredTableAdmin;
     this.structuredTableRegistry = structuredTableRegistry;
+    this.programId = programId;
   }
 
   @Override
   public void startPreview(PreviewRequest<?> previewRequest) throws Exception {
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(previewRequest.getProgram().getNamespaceId()).build());
-    programId = previewRequest.getProgram();
     AppRequest<?> request = previewRequest.getAppRequest();
     ArtifactSummary artifactSummary = request.getArtifact();
     ApplicationId preview = programId.getParent();
@@ -159,7 +166,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                                             artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
                                             request.canUpdateSchedules());
     } catch (Exception e) {
-      this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null);
+      setStatus(new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null));
       throw e;
     }
 
@@ -194,6 +201,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
       @Override
       public void completed() {
+        PreviewStatus status = previewStore.getPreviewStatus(programId.getParent());
         setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null, status.getStartTime(),
                                     System.currentTimeMillis()));
         shutDownUnrequiredServices();
@@ -201,6 +209,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
       @Override
       public void killed() {
+        PreviewStatus status = previewStore.getPreviewStatus(programId.getParent());
         if (!killedByTimer) {
           setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null, status.getStartTime(),
                                       System.currentTimeMillis()));
@@ -213,21 +222,27 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
       @Override
       public void error(Throwable cause) {
+        PreviewStatus status = previewStore.getPreviewStatus(programId.getParent());
         setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause), status.getStartTime(),
                                     System.currentTimeMillis()));
         shutDownUnrequiredServices();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
-    runId = controller.getProgramRunId();
+    startTimeMillis = System.currentTimeMillis();
+    countDownLatch = new CountDownLatch(1);
+    previewStore.putProgramRunId(controller.getProgramRunId());
   }
 
   private void setStatus(PreviewStatus status) {
-    this.status = status;
+    previewStore.putPreviewStatus(programId.getParent(), status);
+    if (!status.getStatus().equals(PreviewStatus.Status.RUNNING) && countDownLatch != null) {
+      countDownLatch.countDown();
+    }
   }
 
   @Override
   public PreviewStatus getStatus() {
-    return status;
+    return previewStore.getPreviewStatus(programId.getParent());
   }
 
   @Override
@@ -247,12 +262,12 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   public ProgramRunId getProgramRunId() {
-    return runId;
+    return previewStore.getProgramRunId(programId.getParent());
   }
 
   @Override
   public RunRecordMeta getRunRecord() {
-    return programStore.getRun(runId);
+    return programStore.getRun(previewStore.getProgramRunId(programId.getParent()));
   }
 
   @Override
@@ -262,13 +277,18 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   protected void startUp() throws Exception {
-    // TODO: CDAP-14838 Ensure preivew has it's own copy of the schema mapping.
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, true);
+    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, false);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
     dsOpExecService.startAndWait();
     datasetService.startAndWait();
+
+    // if there is a preview status in the store, that means this preview already has a run so do not need
+    // to start other services
+    if (previewStore.getPreviewStatus(programId.getParent()) != null) {
+      return;
+    }
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -287,6 +307,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   protected void shutDown() throws Exception {
+    if (countDownLatch != null) {
+      countDownLatch.await(PREVIEW_TIMEOUT - (System.currentTimeMillis() - startTimeMillis), TimeUnit.MILLISECONDS);
+    }
     shutDownUnrequiredServices();
     datasetService.stopAndWait();
     dsOpExecService.stopAndWait();
