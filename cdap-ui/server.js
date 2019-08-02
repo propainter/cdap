@@ -18,15 +18,15 @@
  * Spins up servers
  */
 var express = require('./server/express.js'),
-    Aggregator = require('./server/aggregator.js'),
-    parser = require('./server/config/parser.js'),
-    cdapConfigurator = require('./server/cdap-config.js'),
-    sockjs = require('sockjs'),
-    http = require('http'),
-    fs = require('fs'),
-    log4js = require('log4js'),
-    graphql = require('./graphql/graphql.js'),
-    https = require('https');
+  Aggregator = require('./server/aggregator.js'),
+  parser = require('./server/config/parser.js'),
+  cdapConfigurator = require('./server/cdap-config.js'),
+  sockjs = require('sockjs'),
+  http = require('http'),
+  fs = require('fs'),
+  log4js = require('log4js'),
+  graphql = require('./graphql/graphql.js'),
+  https = require('https');
 
 var cdapConfig, securityConfig;
 
@@ -39,10 +39,10 @@ var cdapConfig, securityConfig;
  * We configure using LOG4JS_CONFIG specified file or we use
  * the default provided in the conf/log4js.json file.
  */
-if(process.env.LOG4JS_CONFIG) {
-  log4js.configure({}, { reloadSecs: 600});
+if (process.env.LOG4JS_CONFIG) {
+  log4js.configure({}, { reloadSecs: 600 });
 } else {
-  log4js.configure(__dirname + "/server/config/log4js.json", { reloadSecs: 300});
+  log4js.configure(__dirname + "/server/config/log4js.json", { reloadSecs: 300 });
 }
 
 // Get a log handle.
@@ -65,7 +65,7 @@ cdapConfigurator.getCDAPConfig()
 
   .then(function (app) {
     graphql.applyMiddleware(app);
-    
+
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
       if (cdapConfig['dashboard.ssl.disable.cert.check'] === 'true') {
@@ -79,7 +79,7 @@ cdapConfigurator.getCDAPConfig()
           key: fs.readFileSync(securityConfig['dashboard.ssl.key']),
           cert: fs.readFileSync(securityConfig['dashboard.ssl.cert'])
         }, app);
-      } catch(e) {
+      } catch (e) {
         log.debug('SSL key/cert files read failed. Please fix the key/ssl certificate files and restart node server -  ', e);
       }
       port = cdapConfig['dashboard.ssl.bind.port'];
@@ -88,7 +88,6 @@ cdapConfigurator.getCDAPConfig()
       server = http.createServer(app);
       port = cdapConfig['dashboard.bind.port'];
     }
-
     server.listen(port, cdapConfig['dashboard.bind.address'], function () {
       log.info('CDAP UI listening on port %s', port);
     });
@@ -112,4 +111,21 @@ cdapConfigurator.getCDAPConfig()
     });
 
     sockServer.installHandlers(server, { prefix: '/_sock' });
+    server.addListener('upgrade', function (req, socket, head) {
+      const nodejsserver = cdapConfig['dashboard.bind.address'];
+      const nodejsport = cdapConfig['dashboard.bind.port'];
+      const nodejsprotocol = (cdapConfig['ssl.external.enabled'] === 'true') ? 'https' : 'http';
+      let allowedOrigin;
+      if (nodejsport) {
+        allowedOrigin = `${nodejsprotocol}://${nodejsserver}:${nodejsport}`;
+      } else {
+        allowedOrigin = `${nodejsprotocol}://${nodejsserver}`;
+      }
+      if (req.headers.origin !== allowedOrigin) {
+        log.info('Unknown Origin: ' + req.headers.origin);
+        log.info('Denying socket connection and closing the channel');
+        socket.end();
+        socket.destroy();
+      }
+    });
   });
