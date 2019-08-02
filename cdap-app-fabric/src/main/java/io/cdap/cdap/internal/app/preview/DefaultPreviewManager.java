@@ -169,24 +169,24 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   protected void startUp() throws Exception {
     File previewDir = previewDataDir.toFile();
 
-    File[] files = previewDir.listFiles();
-    if (files != null) {
-      // there should be at most 10 directories so the process should not take very long
-      for (File file : files) {
-        ProgramId programId;
-        try {
-          programId = ProgramId.fromString(file.getName());
-        } catch (Exception e) {
-          // if there is an exception converting to a preview id, just continue
-          continue;
-        }
-        Injector injector = createPreviewInjector(programId);
-        PreviewRunner runner = injector.getInstance(PreviewRunner.class);
-        if (runner instanceof Service) {
-          ((Service) runner).startAndWait();
-        }
-        appInjectors.put(programId.getParent(), injector);
+    // there should be at most 10 directories so the process should not take very long
+    for (File file : DirUtils.listFiles(previewDir)) {
+      if (!file.isDirectory()) {
+        continue;
       }
+      ProgramId programId;
+      try {
+        programId = ProgramId.fromString(file.getName());
+      } catch (Exception e) {
+        // if there is an exception converting to a preview id, just continue
+        continue;
+      }
+      Injector injector = createPreviewInjector(programId);
+      PreviewRunner runner = injector.getInstance(PreviewRunner.class);
+      if (runner instanceof Service) {
+        ((Service) runner).startAndWait();
+      }
+      appInjectors.put(programId.getParent(), injector);
     }
   }
 

@@ -65,7 +65,6 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -230,11 +229,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }, Threads.SAME_THREAD_EXECUTOR);
     startTimeMillis = System.currentTimeMillis();
     countDownLatch = new CountDownLatch(1);
-    previewStore.putProgramRunId(controller.getProgramRunId());
+    previewStore.setProgramId(controller.getProgramRunId());
   }
 
   private void setStatus(PreviewStatus status) {
-    previewStore.putPreviewStatus(programId.getParent(), status);
+    previewStore.setPreviewStatus(programId.getParent(), status);
     if (!status.getStatus().equals(PreviewStatus.Status.RUNNING) && countDownLatch != null) {
       countDownLatch.countDown();
     }

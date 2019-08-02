@@ -135,7 +135,7 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void putProgramRunId(ProgramRunId programRunId) {
+  public void setProgramId(ProgramRunId programRunId) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
     MDSKey mdsKey = new MDSKey.Builder().add(programRunId.getNamespace()).add(programRunId.getApplication()).build();
@@ -166,7 +166,7 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void putPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus) {
+  public void setPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
     MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace()).add(applicationId.getApplication()).build();

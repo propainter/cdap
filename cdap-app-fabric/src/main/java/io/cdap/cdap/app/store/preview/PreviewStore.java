@@ -64,7 +64,7 @@ public interface PreviewStore {
    *
    * @param programRunId the program run id to save
    */
-  void putProgramRunId(ProgramRunId programRunId);
+  void setProgramId(ProgramRunId programRunId);
 
   /**
    * Get the program run id associated with the preview run
@@ -76,12 +76,12 @@ public interface PreviewStore {
   ProgramRunId getProgramRunId(ApplicationId applicationId);
 
   /**
-   * Put the preview status assoicated with the preview run
+   * Set the preview status assoicated with the preview run
    *
    * @param applicationId the preview id
    * @param previewStatus the preview status
    */
-  void putPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus);
+  void setPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus);
 
   /**
    * Get the preview status assoicated with the preview run
