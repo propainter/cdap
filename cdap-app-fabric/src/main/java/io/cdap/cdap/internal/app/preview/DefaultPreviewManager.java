@@ -72,6 +72,7 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -105,6 +106,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class DefaultPreviewManager extends AbstractIdleService implements PreviewManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
+  // this prefix should not be included in the folder name, since it contains : in the name.
+  // the preview direcotry will be <namespace-name>.<app-id>.<version>.<program-type>.<program-name>
+  private static final String PROGRAM_PREFIX = EntityType.PROGRAM.name().toLowerCase() + ":";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -176,7 +180,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       }
       ProgramId programId;
       try {
-        programId = ProgramId.fromString(file.getName());
+        programId = ProgramId.fromString(PROGRAM_PREFIX + file.getName());
       } catch (Exception e) {
         // if there is an exception converting to a preview id, just continue
         continue;
@@ -257,7 +261,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       .filter(s -> s.endsWith(".bind.address"))
       .forEach(key -> previewCConf.set(key, localhost));
 
-    Path previewDir = Files.createDirectories(previewDataDir.resolve(programId.toString()));
+    Path previewDir = Files.createDirectories(previewDataDir.resolve(
+      programId.toString().replaceFirst(PROGRAM_PREFIX, "")));
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
