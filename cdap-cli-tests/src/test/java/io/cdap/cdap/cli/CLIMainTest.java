@@ -714,7 +714,7 @@ public class CLIMainTest extends CLITestBase {
 
     // test search
     testCommandOutputContains(cli, "search metadata \"fake* fake*\" filtered by target-type dataset",
-        FAKE_DS_ID.toString()); // multiple space-separated arguments
+        FAKE_DS_ID.toString()); // multiple space-separated search terms
 
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
                                                  FakeApp.class.getSimpleName()), FAKE_ARTIFACT_ID.toString());
