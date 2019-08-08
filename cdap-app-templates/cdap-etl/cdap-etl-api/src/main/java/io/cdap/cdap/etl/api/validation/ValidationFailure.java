@@ -82,13 +82,13 @@ public class ValidationFailure {
   }
 
   /**
-   * Adds cause attributes that represents plugin configure failure cause.
+   * Adds cause attributes that represents stage configure property failure cause.
    *
-   * @param pluginConfig plugin config property
-   * @return validation failure with invalid plugin config property cause
+   * @param stageConfigProperty stage config property
+   * @return validation failure with invalid stage config property cause
    */
-  public ValidationFailure withPluginConfigCause(String pluginConfig) {
-    causes.add(new Cause().with(CauseAttributes.STAGE_CONFIG, pluginConfig));
+  public ValidationFailure withStageConfigCause(String stageConfigProperty) {
+    causes.add(new Cause().with(CauseAttributes.STAGE_CONFIG, stageConfigProperty));
     return this;
   }
 
