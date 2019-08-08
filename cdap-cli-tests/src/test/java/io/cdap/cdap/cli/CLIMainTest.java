@@ -713,6 +713,9 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, String.format("get metadata-properties %s", FAKE_DS_ID), "dsKey,dsValue");
 
     // test search
+    testCommandOutputContains(cli, "search metadata \"fake* fake*\" filtered by target-type dataset",
+        FAKE_DS_ID.toString()); // multiple space-separated arguments
+
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
                                                  FakeApp.class.getSimpleName()), FAKE_ARTIFACT_ID.toString());
     testCommandOutputContains(cli, "search metadata appKey:appValue", FAKE_APP_ID.toString());
