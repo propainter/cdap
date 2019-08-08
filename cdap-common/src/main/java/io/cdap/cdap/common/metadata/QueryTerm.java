@@ -26,6 +26,9 @@ import java.util.Objects;
 public class QueryTerm {
   private final String term;
   private final Qualifier qualifier;
+  private final SearchType searchType;
+  private final Comparison comparison;
+  private final Long date;
 
   /**
    * Defines the different types of search terms that can be input.
@@ -37,7 +40,23 @@ public class QueryTerm {
   }
 
   /**
+   * Defines the type of search that should be implemented for this term.
+   * The default type is a STANDARD search.
+   */
+  public enum SearchType {
+    STANDARD, DATE
+  }
+
+  /**
+   * Defines the possible comparison operators for numeric and date values.
+   */
+  public enum Comparison {
+    GREATER, LESS, EQUAL, GREATER_OR_EQUAL, LESS_OR_EQUAL
+  }
+
+  /**
    * Constructs a QueryTerm using the search term and its qualifying information.
+   * searchType is assumed to be standard.
    *
    * @param term the search term
    * @param qualifier the qualifying information {@link Qualifier}
@@ -45,6 +64,45 @@ public class QueryTerm {
   public QueryTerm(String term, Qualifier qualifier) {
     this.term = term;
     this.qualifier = qualifier;
+    this.searchType = SearchType.STANDARD;
+    this.comparison = Comparison.EQUAL;
+    this.date = null;
+  }
+
+  /**
+   * Constructs a QueryTerm using the search term and its qualifying and type information.
+   *
+   * @param term the search term
+   * @param qualifier the qualifying information {@link Qualifier}
+   * @param searchType the search method information {@link SearchType}
+   */
+  public QueryTerm(String term, Qualifier qualifier, SearchType searchType) {
+    this.term = term;
+    this.qualifier = qualifier;
+    this.searchType = searchType;
+    this.comparison = Comparison.EQUAL;
+    this.date = null;
+  }
+
+  /**
+   * Constructs a QueryTerm using search term, qualifying, type, and numeric information.
+   *
+   * @param term the search term
+   * @param qualifier the qualifying information {@link Qualifier}
+   * @param searchType the search method information {@link SearchType}
+   * @param comparison the comparison operator for the numeric value {@link Comparison}
+   * @param number the number which can be associated with a date or a numeric value, depending on the search type
+   */
+  public QueryTerm(String term, Qualifier qualifier, SearchType searchType, Comparison comparison, Long number) {
+    this.term = term;
+    this.qualifier = qualifier;
+    this.searchType = searchType;
+    this.comparison = comparison;
+    if (this.searchType.equals(SearchType.DATE)) {
+      this.date = number;
+    } else {
+      this.date = null;
+    }
   }
 
   /**
@@ -59,6 +117,27 @@ public class QueryTerm {
    */
   public Qualifier getQualifier() {
     return qualifier;
+  }
+
+  /**
+   * @return the search term's search type
+   */
+  public SearchType getSearchType() {
+    return searchType;
+  }
+
+  /**
+   * @return the query term's comparison operator
+   */
+  public Comparison getComparison() {
+    return comparison;
+  }
+
+  /**
+   * @return the query term's date value
+   */
+  public Long getDate() {
+    return date;
   }
 
   @Override

@@ -21,6 +21,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.SchemaWalker;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.metadata.QueryParser;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.ScopedName;
@@ -142,11 +143,13 @@ public class MetadataDocument {
     private final String scope;
     private final String name;
     private final String value;
+    private final Long date;
 
     Property(String scope, String name, String value) {
       this.scope = scope;
       this.name = name;
       this.value = value;
+      this.date = QueryParser.parseDate(value);
     }
 
     @Override
@@ -160,12 +163,13 @@ public class MetadataDocument {
       Property property = (Property) o;
       return Objects.equals(scope, property.scope) &&
         Objects.equals(name, property.name) &&
-        Objects.equals(value, property.value);
+        Objects.equals(value, property.value) &&
+        Objects.equals(date, property.date);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), scope, name, value);
+      return Objects.hash(super.hashCode(), scope, name, value, date);
     }
 
     @Override

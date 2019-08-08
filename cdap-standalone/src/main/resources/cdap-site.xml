@@ -266,4 +266,9 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.storage.implementation</name>
+    <value>elastic</value>
+  </property>
+
 </configuration>
