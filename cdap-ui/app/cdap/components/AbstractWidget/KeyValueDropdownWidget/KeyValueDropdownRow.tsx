@@ -140,5 +140,5 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
   };
 }
 
-const StyledKeyValuDropdownRow = withStyles(styles)(KeyValueDropdownRow);
-export default StyledKeyValuDropdownRow;
+const StyledKeyValueDropdownRow = withStyles(styles)(KeyValueDropdownRow);
+export default StyledKeyValueDropdownRow;

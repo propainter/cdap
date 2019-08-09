@@ -184,10 +184,13 @@ angular.module(PKG.name + '.commons')
         }
       },
       'function-dropdown-with-alias': {
-        element: '<my-function-dropdown-with-alias></my-function-dropdown-with-alias>',
+        element: '<function-dropdown-alias-widget></function-dropdown-alias-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'placeholders': 'myconfig["widget-attributes"].placeholders',
+          'dropdown-options': 'myconfig["widget-attributes"]["dropdownOptions"]',
         }
       },
       'schedule': {
@@ -202,56 +205,61 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'value': 'model || myconfig.properties.default || myconfig["widget-attributes"].default',
           'options': '(myconfig.properties.values || myconfig["widget-attributes"].values)',
-          'on-change': 'onChange'
+          'on-change': 'onChange',
+          'disabled': 'disabled',
         }
       },
       'dataset-selector': {
-        element: '<my-dataset-selector></my-dataset-selector>',
+        element: '<dataset-selector-widget></dataset-selector-widget>',
         attributes: {
-          'ng-model': 'model',
-          'dataset-type': 'dataset',
-          'config': 'myconfig',
-          'stage-name': 'stageName'
-        }
+          'value': 'model',
+          'on-change': 'onChange',
+          'placeholder': 'myconfig["widget-attributes"].placeholder',
+        },
       },
       'sql-select-fields': {
-        element: '<my-sql-selector></my-sql-selector>',
+        element: '<sql-selector-widget></sql-selector-widget>',
         attributes: {
-          'ng-model': 'model',
-          'input-schema': 'inputSchema'
+          'value': 'model',
+          'input-schema': 'inputSchema',
+          'on-change': 'onChange',
+          'disabled': 'disabled'
         }
       },
       'join-types': {
-        element: '<my-join-types></my-join-types>',
+        element: '<join-type-widget></join-type-widget>',
         attributes: {
-          'ng-model': 'model',
-          'input-schema': 'inputSchema'
+          'value': 'model',
+          'input-schema': 'inputSchema',
+          'on-change': 'onChange'
         }
       },
       'sql-conditions': {
-        element: '<my-sql-conditions></my-sql-conditions>',
+        element: '<sql-conditions-widget></sql-conditions-widget>',
         attributes: {
-          'ng-model': 'model',
+          'value': 'model',
           'disabled': 'disabled',
-          'input-schema': 'inputSchema'
+          'input-schema': 'inputSchema',
+          'on-change': 'onChange'
         }
       },
       'input-field-selector': {
-        element: '<my-input-field-selector></my-input-field-selector>',
+        element: '<input-field-dropdown></input-field-dropdown>',
         attributes: {
-          'ng-model': 'model',
-          'disabled': 'disabled',
+          'value': 'model',
           'input-schema': 'inputSchema',
-          'config': 'myconfig'
+          'on-change': 'onChange',
+          'disabled': 'disabled'
         }
       },
       'wrangler-directives': {
-        element: '<my-wrangler-directives></my-wrangler-directives>',
+        element: '<wrangler-editor></wrangler-editor>',
         attributes: {
-          'ng-model': 'model',
+          'value': 'model',
           'disabled': 'disabled',
           'data-config': 'myconfig',
-          'properties': 'properties'
+          'properties': 'properties',
+          'on-change': 'onChange'
         }
       },
       'rules-engine-editor': {
@@ -272,25 +280,30 @@ angular.module(PKG.name + '.commons')
         }
       },
       'multi-select': {
-        element: '<my-multi-select-dropdown></my-multi-select-dropdown>',
+        element: '<multi-select></multi-select>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig'
+          'value': 'model',
+          'options': 'myconfig["widget-attributes"].options',
+          'on-change': 'onChange',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
         }
       },
       'radio-group': {
-        element: '<my-radio-group></my-radio-group>',
+        element: '<radio-group-widget></radio-group-widget>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig'
+          'value': 'model',
+          'widget-attributes': 'myconfig["widget-attributes"]',
+          'property-name':'myconfig.name',
+          'on-change': 'onChange'
         }
       },
       'toggle': {
-        element: '<my-toggle-switch></my-toggle-switch>',
+        element: '<toggle-switch-widget></toggle-switch-widget>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig',
+          'value': 'model',
+          'widget-attributes': 'myconfig["widget-attributes"]',
           'disabled': 'disabled',
+          'on-change': 'onChange'
         }
       },
     };

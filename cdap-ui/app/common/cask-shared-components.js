@@ -83,6 +83,18 @@ var MultipleValuesWidget = require('../cdap/components/AbstractWidget/MultipleVa
   .default;
 var PluginConnectionBrowser = require('../cdap/components/DataPrepConnections/PluginConnectionBrowser')
   .default;
+var FunctionDropdownAlias = require('../cdap/components/AbstractWidget/FunctionDropdownAliasWidget')
+  .default;
+var ToggleSwitchWidget = require('../cdap/components/AbstractWidget/ToggleSwitchWidget').default;
+var WranglerEditor = require('../cdap/components/AbstractWidget/WranglerEditor').default;
+var RadioGroupWidget = require('../cdap/components/AbstractWidget/RadioGroupWidget').default;
+var MultiSelect = require('../cdap/components/AbstractWidget/FormInputs/MultiSelect').default;
+var JoinTypeWidget = require('../cdap/components/AbstractWidget/JoinTypeWidget').default;
+var InputFieldDropdown = require('../cdap/components/AbstractWidget/InputFieldDropdown').default;
+var DatasetSelectorWidget = require('../cdap/components/AbstractWidget/DatasetSelectorWidget')
+  .default;
+var SqlConditionsWidget = require('../cdap/components/AbstractWidget/SqlConditionsWidget').default;
+var SqlSelectorWidget = require('../cdap/components/AbstractWidget/SqlSelectorWidget').default;
 
 export {
   Store,
@@ -144,4 +156,14 @@ export {
   KeyValueDropdownWidget,
   MultipleValuesWidget,
   PluginConnectionBrowser,
+  FunctionDropdownAlias,
+  ToggleSwitchWidget,
+  WranglerEditor,
+  RadioGroupWidget,
+  MultiSelect,
+  JoinTypeWidget,
+  InputFieldDropdown,
+  DatasetSelectorWidget,
+  SqlConditionsWidget,
+  SqlSelectorWidget,
 };

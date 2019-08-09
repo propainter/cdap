@@ -36,6 +36,7 @@ import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.common.metadata.QueryParser;
 import io.cdap.cdap.common.metadata.QueryTerm;
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
+import io.cdap.cdap.common.metadata.QueryTerm.SearchType;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -158,6 +159,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String NESTED_SCOPE_FIELD = "props.scope"; // contains the scope in nested props
   private static final String NESTED_VALUE_FIELD = "props.value"; // contains the value in nested props
   private static final String NESTED_DATE_FIELD = "props.date"; // contains the date in nested props
+    // contains all numeric values in nested props
+  private static final String NESTED_NUMERICVALUE_FIELD = "props.numericValue";
   private static final String PROPS_FIELD = "props"; // contains all properties
   private static final String TEXT_FIELD = "text"; // contains all plain text
   private static final String TYPE_FIELD = "type"; // contains the type of the entity
@@ -1011,7 +1014,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     String textField = request.getScope() == null ? TEXT_FIELD : request.getScope().name().toLowerCase();
 
     // split the query into its parsed terms and create corresponding QueryBuilders for each
-    request.getQuery();
     List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
     if (queryTerms.isEmpty()) {
       return QueryBuilders.matchAllQuery();
@@ -1040,20 +1042,18 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   /**
    * Create a sub-query for a single term in the query string.
    *
-   * @param queryTerm the QueryTerm object as parsed by the QueryParser
+   * @param queryTerm the formatted query term, with all relevant search information
    * @param textField the default text field to search if the term does not have a field
    */
   private QueryBuilder createTermQuery(QueryTerm queryTerm, String textField, SearchRequest request) {
     // determine if the term has a field qualifier
     String field = null;
-    String term = queryTerm.getTerm();
-    term = term.trim().toLowerCase();
+    String term = queryTerm.getTerm().trim().toLowerCase();
     // Create a term query on the term as is. This would include a field: prefix if the term hs one.
     // This is important for the case of schema search: If the schema contains a field f of type t,
     // then we index "f:t" in the plain text as well as in the "schema" property. If the query is
     // just "f:t", we must search the plain text field for that.
-    QueryBuilder plainQuery = createTermQuery(textField, term);
-    // here it's fine that textField is text because we want to check it as a string
+    QueryBuilder plainQuery = createTermQuery(queryTerm, textField, term);
     if (term.contains(MetadataConstants.KEYVALUE_SEPARATOR)) {
       // split the search term in two parts on first occurrence of KEYVALUE_SEPARATOR and trim the key and value
       String[] split = term.split(MetadataConstants.KEYVALUE_SEPARATOR, 2);
@@ -1079,8 +1079,14 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         // ignore - the follow-on code will create a regular term query for this
       }
     }
-    BoolQueryBuilder boolQuery = buildNestedQuery(field, request);
-    boolQuery.must(createTermQuery(NESTED_VALUE_FIELD, term));
+    BoolQueryBuilder boolQuery = new BoolQueryBuilder();
+    boolQuery.must(new TermQueryBuilder(NESTED_NAME_FIELD, field).boost(0.0F));
+    if (request.getScope() != null) {
+      boolQuery.must(new TermQueryBuilder(NESTED_SCOPE_FIELD, request.getScope().name()).boost(0.0F));
+    }
+    boolQuery.must(queryTerm.getSearchType() == SearchType.NUMERIC
+        ? createTermQuery(queryTerm, NESTED_NUMERICVALUE_FIELD, term)
+        : createTermQuery(queryTerm, NESTED_VALUE_FIELD, term));
     QueryBuilder propertyQuery = QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
 
     if (queryTerm.getSearchType() == QueryTerm.SearchType.DATE) {
@@ -1146,9 +1152,33 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   /**
    * Create a query for a single term in a given field.
    *
-   * @return a wildcard query is the term contains * or ?, or a match query otherwise
+   * @return a range query if the term is a number,
+   * a wildcard query if the term is a string and contains * or ?,
+   * or a match query otherwise
    */
-  private QueryBuilder createTermQuery(String field, String term) {
+  private QueryBuilder createTermQuery(QueryTerm queryTerm, String field, String term) {
+    // if attempting to conduct a numeric search
+    if (field.equals(NESTED_NUMERICVALUE_FIELD)) {
+      try {
+        switch (queryTerm.getComparison()) {
+          case GREATER:
+            return QueryBuilders.rangeQuery(field).gt(Double.parseDouble(QueryParser.extractTermValue(term)));
+          case GREATER_OR_EQUAL:
+            return QueryBuilders.rangeQuery(field).gte(Double.parseDouble(QueryParser.extractTermValue(term)));
+          case LESS:
+            return QueryBuilders.rangeQuery(field).lt(Double.parseDouble(QueryParser.extractTermValue(term)));
+          case LESS_OR_EQUAL:
+            return QueryBuilders.rangeQuery(field).lte(Double.parseDouble(QueryParser.extractTermValue(term)));
+          case EQUALS:
+            // run an equality search
+            return QueryBuilders.termQuery(field, Double.parseDouble(QueryParser.extractTermValue(term)));
+          default:
+            throw new IllegalStateException("Invalid comparison type: " + queryTerm.getComparison());
+        }
+      } catch (NumberFormatException e) {
+        // ignore; followup code will search as a string
+      }
+    }
     return term.contains("*") || term.contains("?")
       ? new WildcardQueryBuilder(field, term)
       // the term should not get split in to multiple words, but in case it does, let's require all words

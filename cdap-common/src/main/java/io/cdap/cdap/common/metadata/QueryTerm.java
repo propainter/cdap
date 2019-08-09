@@ -20,7 +20,7 @@ import java.util.Objects;
 
 /**
  * Represents a single item in a search query in terms of its content (i.e. the value being searched for)
- * and its qualifying information (e.g. whether a match for it is optional or required).
+ * and any useful properties of the search term, e.g. its qualifier and search type.
  * Is typically constructed in a list via {@link QueryParser#parse(String)}
  */
 public class QueryTerm {
@@ -31,8 +31,8 @@ public class QueryTerm {
   private final Long date;
 
   /**
-   * Defines the different types of search terms that can be input.
-   * A qualifier determines how the search implementation should handle the given term, e.g.
+   * Defines the different types of search operators that can be used.
+   * A qualifier determines how the search implementation should prioritize the given term, e.g.
    * prioritizing required terms over optional ones.
    */
   public enum Qualifier {
@@ -40,47 +40,46 @@ public class QueryTerm {
   }
 
   /**
-   * Defines the type of search that should be implemented for this term.
-   * The default type is a STANDARD search.
+   * Defines the different types of search terms that can be used.
+   * A search type describes the intuitive object type of the term;
+   * for instance, the term may be intuited as a number and parsed as one, though internally represented as a String.
+   * Its search type would be considered NUMERIC.
    */
   public enum SearchType {
-    STANDARD, DATE
+    STRING, NUMERIC, DATE
   }
 
   /**
-   * Defines the possible comparison operators for numeric and date values.
+   * Defines the different relationships a search term can have to potential matches.
+   * For a String or keyword search, only EQUALS is valid.
    */
   public enum Comparison {
-    GREATER, LESS, EQUAL, GREATER_OR_EQUAL, LESS_OR_EQUAL
+    EQUALS, GREATER, GREATER_OR_EQUAL, LESS, LESS_OR_EQUAL
   }
 
   /**
-   * Constructs a QueryTerm using the search term and its qualifying information.
-   * searchType is assumed to be standard.
+   * Older constructor that assumes a simple String search. Ineligible for numeric search fields.
    *
    * @param term the search term
    * @param qualifier the qualifying information {@link Qualifier}
    */
   public QueryTerm(String term, Qualifier qualifier) {
-    this.term = term;
-    this.qualifier = qualifier;
-    this.searchType = SearchType.STANDARD;
-    this.comparison = Comparison.EQUAL;
-    this.date = null;
+    this(term, qualifier, SearchType.STRING, Comparison.EQUALS);
   }
 
   /**
-   * Constructs a QueryTerm using the search term and its qualifying and type information.
+   * Constructs a QueryTerm using the search term, qualifying information, search type, and comparison type.
    *
    * @param term the search term
    * @param qualifier the qualifying information {@link Qualifier}
-   * @param searchType the search method information {@link SearchType}
+   * @param searchType the intuitive object type {@link SearchType}
+   * @param comparison the desired relative value of potential matches {@link Comparison}
    */
-  public QueryTerm(String term, Qualifier qualifier, SearchType searchType) {
+  public QueryTerm(String term, Qualifier qualifier, SearchType searchType, Comparison comparison) {
     this.term = term;
     this.qualifier = qualifier;
     this.searchType = searchType;
-    this.comparison = Comparison.EQUAL;
+    this.comparison = comparison;
     this.date = null;
   }
 
@@ -105,37 +104,22 @@ public class QueryTerm {
     }
   }
 
-  /**
-   * @return the search term, without its preceding operator
-   */
   public String getTerm() {
     return term;
   }
 
-  /**
-   * @return the search term's qualifying information
-   */
   public Qualifier getQualifier() {
     return qualifier;
   }
 
-  /**
-   * @return the search term's search type
-   */
   public SearchType getSearchType() {
     return searchType;
   }
 
-  /**
-   * @return the query term's comparison operator
-   */
   public Comparison getComparison() {
     return comparison;
   }
 
-  /**
-   * @return the query term's date value
-   */
   public Long getDate() {
     return date;
   }
@@ -151,11 +135,23 @@ public class QueryTerm {
 
     QueryTerm that = (QueryTerm) o;
 
-    return Objects.equals(term, that.getTerm()) && Objects.equals(qualifier, that.getQualifier());
+    return Objects.equals(term, that.getTerm())
+        && Objects.equals(qualifier, that.getQualifier())
+        && Objects.equals(searchType, that.getSearchType())
+        && Objects.equals(comparison, that.getComparison())
+        && Objects.equals(date, that.getDate());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(term, qualifier);
+    return Objects.hash(term, qualifier, searchType, comparison, date);
+  }
+
+  @Override
+  public String toString() {
+    return "term:" + term
+        + ", qualifier: " + qualifier
+        + ", searchType: " + searchType
+        + ", comparison: " + comparison;
   }
 }

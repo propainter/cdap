@@ -17,7 +17,8 @@ import React from 'react';
 
 import PropTypes from 'prop-types';
 import Select from '@material-ui/core/Select';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import MenuItem from '@material-ui/core/MenuItem';
+import withStyles from '@material-ui/core/styles/withStyles';
 import InputBase from '@material-ui/core/InputBase';
 
 const styles = () => {
@@ -44,9 +45,10 @@ interface ISelectProps {
   value: string;
   onChange: (value: string) => void;
   options: ISelectOptions[];
+  disabled?: boolean;
 }
 
-export default function CustomSelect({ value, onChange, options }: ISelectProps) {
+export default function CustomSelect({ value, onChange, options, disabled }: ISelectProps) {
   const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
@@ -56,11 +58,18 @@ export default function CustomSelect({ value, onChange, options }: ISelectProps)
   const optionValues = options.map((opt) => {
     return typeof opt === 'string' ? { value: opt, label: opt } : opt;
   });
-
   return (
-    <Select fullWidth native value={value} onChange={onChangeHandler} input={<CustomizedInput />}>
+    <Select
+      fullWidth
+      value={value}
+      onChange={onChangeHandler}
+      input={<CustomizedInput />}
+      disabled={disabled}
+    >
       {optionValues.map((opt) => (
-        <option value={opt.value}>{opt.label}</option>
+        <MenuItem value={opt.value} key={opt.value}>
+          {opt.label}
+        </MenuItem>
       ))}
     </Select>
   );
@@ -70,4 +79,5 @@ export default function CustomSelect({ value, onChange, options }: ISelectProps)
   value: PropTypes.string,
   onChange: PropTypes.func,
   options: PropTypes.arrayOf(PropTypes.string),
+  disabled: PropTypes.bool,
 };
