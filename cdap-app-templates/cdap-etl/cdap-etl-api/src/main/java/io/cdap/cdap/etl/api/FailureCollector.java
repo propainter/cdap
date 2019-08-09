@@ -29,7 +29,10 @@ import javax.annotation.Nullable;
 public interface FailureCollector {
 
   /**
-   * Add a validation failure to this failure collector.
+   * Add a validation failure to this failure collector. The method returns the validation failure that was added to
+   * the failure collector. This failure can be used to add additional {@link ValidationFailure.Cause}s.
+   * For example,
+   * <code>failureCollector.addFailure("message", "action").withStageConfigCause("configProperty");</code>
    *
    * @param message failure message
    * @param correctiveAction corrective action
