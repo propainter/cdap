@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.validation;
 import io.cdap.cdap.api.annotation.Beta;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +198,7 @@ public class ValidationFailure {
      * Returns all the attributes of the cause.
      */
     public Map<String, String> getAttributes() {
-      return attributes;
+      return Collections.unmodifiableMap(new HashMap<>(attributes));
     }
 
     @Override

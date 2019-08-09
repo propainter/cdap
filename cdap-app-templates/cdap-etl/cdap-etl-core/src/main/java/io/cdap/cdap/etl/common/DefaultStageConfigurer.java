@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +113,7 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
       }
 
       // throw a validation exception if this configurer has any stage validation failures
-      throw new ValidationException(Collections.unmodifiableList(new ArrayList<>(failures)));
+      throw new ValidationException(failures);
     }
   }
 

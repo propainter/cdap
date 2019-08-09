@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.api.validation;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,7 +27,7 @@ import java.util.List;
  */
 @Beta
 public class ValidationException extends RuntimeException {
-  private List<ValidationFailure> failures;
+  private final List<ValidationFailure> failures;
 
   /**
    * Creates a validation exception with list of failures.
@@ -34,7 +36,7 @@ public class ValidationException extends RuntimeException {
    */
   public ValidationException(List<ValidationFailure> failures) {
     super("Errors were encountered during validation.");
-    this.failures = failures;
+    this.failures = Collections.unmodifiableList(new ArrayList<>(failures));
   }
 
   /**
