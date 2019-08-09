@@ -22,8 +22,6 @@ import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.common.cli.CLI;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -31,7 +29,10 @@ import org.junit.rules.TemporaryFolder;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URI;
+import java.util.Arrays;
 import javax.annotation.Nullable;
+
+
 
 /**
  * Base class for CLI Tests.
