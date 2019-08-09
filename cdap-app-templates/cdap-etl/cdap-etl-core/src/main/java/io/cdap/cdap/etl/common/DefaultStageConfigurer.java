@@ -104,12 +104,12 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
       for (ValidationFailure failure : failures) {
         List<ValidationFailure.Cause> causes = failure.getCauses();
         if (causes.isEmpty()) {
-          causes.add(new ValidationFailure.Cause().with(STAGE, stageName));
+          causes.add(new ValidationFailure.Cause().addAttribute(STAGE, stageName));
           continue;
         }
         for (ValidationFailure.Cause cause : causes) {
           // stage name is added by the configurer before throwing the validation exception
-          cause.getAttributes().put(STAGE, stageName);
+          cause.addAttribute(STAGE, stageName);
         }
       }
 

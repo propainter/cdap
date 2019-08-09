@@ -33,7 +33,7 @@ public class ValidationException extends RuntimeException {
    * @param failures list of validation failures
    */
   public ValidationException(List<ValidationFailure> failures) {
-    super(failures.isEmpty() ? "Validation Exception occurred." : failures.iterator().next().getMessage());
+    super("Errors were encountered during validation.");
     this.failures = failures;
   }
 

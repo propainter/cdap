@@ -34,7 +34,6 @@ public class ValidationFailure {
   private final String correctiveAction;
   private final List<Cause> causes;
 
-
   /**
    * Creates a validation failure with provided message.
    *
@@ -76,8 +75,9 @@ public class ValidationFailure {
    * @return validation failure with plugin not found cause
    */
   public ValidationFailure withPluginNotFoundCause(String pluginId, String pluginName, String pluginType) {
-    causes.add(new Cause().with(CauseAttributes.PLUGIN_ID, pluginId).with(CauseAttributes.PLUGIN_NAME, pluginName)
-                 .with(CauseAttributes.PLUGIN_TYPE, pluginType));
+    causes.add(new Cause().addAttribute(CauseAttributes.PLUGIN_ID, pluginId)
+                 .addAttribute(CauseAttributes.PLUGIN_NAME, pluginName)
+                 .addAttribute(CauseAttributes.PLUGIN_TYPE, pluginType));
     return this;
   }
 
@@ -88,7 +88,7 @@ public class ValidationFailure {
    * @return validation failure with invalid stage config property cause
    */
   public ValidationFailure withStageConfigCause(String stageConfigProperty) {
-    causes.add(new Cause().with(CauseAttributes.STAGE_CONFIG, stageConfigProperty));
+    causes.add(new Cause().addAttribute(CauseAttributes.STAGE_CONFIG, stageConfigProperty));
     return this;
   }
 
@@ -100,8 +100,8 @@ public class ValidationFailure {
    * @return validation failure with invalid input schema field cause
    */
   public ValidationFailure withInvalidInputSchemaCause(String fieldName, @Nullable String inputStage) {
-    causes.add(new Cause().with(CauseAttributes.INPUT_STAGE, inputStage)
-                 .with(CauseAttributes.INPUT_SCHEMA_FIELD, fieldName));
+    causes.add(new Cause().addAttribute(CauseAttributes.INPUT_STAGE, inputStage)
+                 .addAttribute(CauseAttributes.INPUT_SCHEMA_FIELD, fieldName));
     return this;
   }
 
@@ -113,8 +113,8 @@ public class ValidationFailure {
    * @return validation failure with invalid output schema field cause
    */
   public ValidationFailure withInvalidOutputSchemaCause(String fieldName, @Nullable String outputPort) {
-    causes.add(new Cause().with(CauseAttributes.OUTPUT_PORT, outputPort)
-                 .with(CauseAttributes.OUTPUT_SCHEMA_FIELD, fieldName));
+    causes.add(new Cause().addAttribute(CauseAttributes.OUTPUT_PORT, outputPort)
+                 .addAttribute(CauseAttributes.OUTPUT_SCHEMA_FIELD, fieldName));
     return this;
   }
 
@@ -173,13 +173,13 @@ public class ValidationFailure {
     }
 
     /**
-     * Adds attributes to this cause.
+     * Adds an attribute to this cause.
      *
      * @param attribute cause attribute name
      * @param value cause attribute value
      * @return this cause
      */
-    public Cause with(String attribute, String value) {
+    public Cause addAttribute(String attribute, String value) {
       attributes.put(attribute, value);
       return this;
     }
