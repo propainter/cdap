@@ -86,6 +86,7 @@ public class DataprocClient implements AutoCloseable {
   private final ClusterControllerClient client;
   private final Compute compute;
   private final String projectId;
+  private final String networkHostProjectId;
   private final String network;
   private final String zone;
   private final boolean useInternalIP;
@@ -278,6 +279,8 @@ public class DataprocClient implements AutoCloseable {
   private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, boolean useInternalIP) {
     this.projectId = conf.getProjectId();
     this.network = conf.getNetwork();
+    this.networkHostProjectId = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+      conf.getNetworkHostProjectID();
     this.zone = conf.getZone();
     this.useInternalIP = useInternalIP;
     this.conf = conf;
@@ -484,7 +487,7 @@ public class DataprocClient implements AutoCloseable {
    * @throws IOException If failed to discover those firewall rules
    */
   private Collection<String> getFirewallTargetTags() throws IOException {
-    FirewallList firewalls = compute.firewalls().list(projectId).execute();
+    FirewallList firewalls = compute.firewalls().list(networkHostProjectId).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
 
@@ -524,9 +527,9 @@ public class DataprocClient implements AutoCloseable {
     if (!requiredPorts.isEmpty()) {
       String portList = requiredPorts.stream().map(p -> String.valueOf(p.port)).collect(Collectors.joining(","));
       throw new IllegalArgumentException(String.format(
-        "Could not find an ingress firewall rule for network '%s' for ports '%s'. " +
+        "Could not find an ingress firewall rule for network '%s' in project '%s' for ports '%s'. " +
           "Please create a rule to allow incoming traffic on those ports for your IP range.",
-        network, portList));
+        network, networkHostProjectId, portList));
     }
     return tags;
   }
