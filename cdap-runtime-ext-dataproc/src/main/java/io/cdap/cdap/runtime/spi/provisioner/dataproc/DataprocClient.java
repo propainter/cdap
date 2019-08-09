@@ -318,11 +318,15 @@ public class DataprocClient implements AutoCloseable {
         .addServiceAccountScopes("https://www.googleapis.com/auth/cloud-platform")
         .setZoneUri(conf.getZone())
         .putAllMetadata(metadata);
+      String networkHostProjectId = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+        conf.getNetworkHostProjectID();
       // subnets are unique within a location, not within a network, which is why these configs are mutually exclusive.
       if (conf.getSubnet() != null) {
-        clusterConfig.setSubnetworkUri(conf.getSubnet());
+        clusterConfig.setSubnetworkUri(String.format("projects/%s/regions/%s/%s", networkHostProjectId,
+                                                     conf.getRegion(), conf.getSubnet()));
       } else {
-        clusterConfig.setNetworkUri(network);
+        clusterConfig.setNetworkUri(String.format("projects/%s/global/networks/%s", networkHostProjectId,
+                                                  conf.getNetwork()));
       }
 
       for (String targetTag : getFirewallTargetTags()) {
