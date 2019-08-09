@@ -47,6 +47,7 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -109,6 +110,8 @@ public class DataprocClient implements AutoCloseable {
     }
 
     String projectId = conf.getProjectId();
+    String networkHostProjectID = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+      conf.getNetworkHostProjectID();
     String systemProjectId = null;
     try {
       systemProjectId = DataprocConf.getSystemProjectId();
@@ -121,14 +124,15 @@ public class DataprocClient implements AutoCloseable {
       network = systemNetwork;
     } else if (network == null) {
       // Otherwise, pick a network from the configured project using the Compute API
-      network = findNetwork(projectId, compute);
+
+      network = findNetwork(networkHostProjectID, compute);
     }
     if (network == null) {
       throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
     }
 
     String subnet = conf.getSubnet();
-    Network networkInfo = getNetworkInfo(projectId, network, compute);
+    Network networkInfo = getNetworkInfo(networkHostProjectID, network, compute);
 
     PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo, compute);
 
@@ -140,20 +144,24 @@ public class DataprocClient implements AutoCloseable {
       LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
                                "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
                                "to launch Dataproc clusters with internal IP only.", systemNetwork,
-                             systemProjectId, network, projectId));
+                             systemProjectId, network, networkHostProjectID));
     }
 
-    // Use internal IP for the Dataproc cluster if instance is private or user has not preferred external IP and
-    // (CDAP is running in the same customer project as Dataproc is going to be launched or
+    // Use internal IP for the Dataproc cluster if instance is private
+    // or
+    // user has not preferred external IP and (CDAP is running in the same customer project as Dataproc is going to
+    // be launched
+    // or
     // Network peering is done between customer network and system network and is in ACTIVE mode).
-    boolean useInternalIP = privateInstance || !conf.isPreferExternalIP()
-      && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
+    boolean useInternalIP = privateInstance ||
+      !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId)) ||
+      state == PeeringState.ACTIVE);
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
       throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
                                                          + "Please use a different subnet.",
-                                                       subnet, network, projectId));
+                                                       subnet, network, networkHostProjectID));
     }
 
     // if the network uses custom subnets, a subnet must be provided to the dataproc api
@@ -164,7 +172,7 @@ public class DataprocClient implements AutoCloseable {
       if (subnets == null || subnets.isEmpty()) {
         throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
                                                            + "Please create a subnet or use a different network.",
-                                                         network, projectId));
+                                                         network, networkHostProjectID));
       }
 
       // if no subnet was configured, choose one
