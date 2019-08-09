@@ -141,7 +141,7 @@ public class DataprocConf {
 
   @Nullable
   public String getNetworkHostProjectID() {
-    return NETWORK_HOST_PROJECT_ID;
+    return networkHostProjectID;
   }
 
   @Nullable
