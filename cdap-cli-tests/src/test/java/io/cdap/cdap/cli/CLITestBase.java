@@ -22,6 +22,8 @@ import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.common.cli.CLI;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -72,6 +74,36 @@ public class CLITestBase {
     });
   }
 
+  protected static void testCommandOutputContainsAll(CLI cli, String command,
+      final String ... expectedOutput) throws Exception {
+    testCommand(cli, command, new Function<String, Void>() {
+      @Nullable
+      @Override
+      public Void apply(@Nullable String output) {
+        Arrays.stream(expectedOutput).forEach(s -> {
+          Assert.assertTrue(String.format("Expected output '%s' to contain '%s'", output, s),
+              output != null && output.contains(s));
+        });
+        return null;
+      }
+    });
+  }
+
+  protected static void testCommandOutputContainsNone(CLI cli, String command,
+      final String ... expectedOutput) throws Exception {
+    testCommand(cli, command, new Function<String, Void>() {
+      @Nullable
+      @Override
+      public Void apply(@Nullable String output) {
+        Arrays.stream(expectedOutput).forEach(s -> {
+          Assert.assertTrue(String.format("Expected output '%s' to not contain '%s'", output, s),
+              output != null && !output.contains(s));
+        });
+        return null;
+      }
+    });
+  }
+
   protected static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
     String output = getCommandOutput(cli, command);
     outputValidator.apply(output);
@@ -84,4 +116,5 @@ public class CLITestBase {
       return outputStream.toString();
     }
   }
+
 }

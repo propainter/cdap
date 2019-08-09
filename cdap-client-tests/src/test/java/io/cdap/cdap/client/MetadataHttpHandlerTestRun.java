@@ -1261,6 +1261,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // schema search for a field with the given fieldname:fieldtype
     assertSearch(searchMetadata(NamespaceId.DEFAULT, "body:STRING field1:STRING"), dsWithSchema);
 
+    // search datasets using required syntax
+    assertSearch(searchMetadata(NamespaceId.DEFAULT, "type:dataset +kvt2"), datasetInstance2);
+
     // add a user property with "schema" as key
     Map<String, String> datasetProperties = ImmutableMap.of("schema", "schemaValue");
     addProperties(datasetInstance, datasetProperties);
