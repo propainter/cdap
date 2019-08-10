@@ -176,10 +176,8 @@ public class DataprocClient implements AutoCloseable {
                                                          network, networkHostProjectID));
       }
 
-      // if no subnet was configured, choose one
-      if (subnet == null) {
-        subnet = chooseSubnet(network, subnets, conf.getZone());
-      }
+      subnet = chooseSubnet(network, subnets, subnet, conf.getZone());
+
     }
 
     return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
@@ -227,12 +225,18 @@ public class DataprocClient implements AutoCloseable {
   // subnets are identified as
   // "https://www.googleapis.com/compute/v1/projects/<project>/regions/<region>/subnetworks/<name>"
   // a subnet in the same region as the dataproc cluster must be chosen
-  private static String chooseSubnet(String network, List<String> subnets, String zone) {
+  private static String chooseSubnet(String network, List<String> subnets, @Nullable String subnet, String zone) {
     // zones are always <region>-<letter>
     String region = zone.substring(0, zone.lastIndexOf('-'));
-    for (String subnet : subnets) {
-      if (subnet.contains(region + "/subnetworks")) {
-        return subnet;
+    for (String currentSubnet : subnets) {
+      // if a subnet name is given then get the region of that subnet based on the zone
+      if (subnet != null) {
+        if (!currentSubnet.endsWith("subnetworks/" + subnet)) {
+          continue;
+        }
+      }
+      if (currentSubnet.contains(region + "/subnetworks")) {
+        return currentSubnet;
       }
     }
     throw new IllegalArgumentException(
